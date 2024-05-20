@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../static/img/favicon.ico">
+    <title>Web GRPC</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-button/0.1.4/github-btn.min.css">
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="../static/js/index.js"></script>
+    <style>
+        .loading-container {
+            position: absolute;
+            top: 30%;
+            left: 60%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+<div id="container" class="">
+    <div class="drawer drawer-open">
+        <input id="my-drawer-3" type="checkbox" class="drawer-toggle"/>
+        <div class="drawer-content flex flex-col">
+            <!-- Navbar -->
+            <div class="w-full navbar bg-base-300 sticky top-0 z-50">
+                <div class="flex-1 px-2 mx-2">Web GRPC</div>
+                <div class="flex-none">
+                    <ul class="menu menu-horizontal">
+                        <!-- Navbar menu content here -->
+                        <li><a class="github-button" href="https://github.com/KKmigu/web-grpc" data-icon="octicon-star" data-show-count="true" aria-label="Star KKmigu/web-grpc on GitHub">Star</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- Content -->
+            <div class="m-8 flex flex-col">
+                <div class="flex flex-row items-center gap-2">
+                    <label class="input input-bordered flex grow items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="#4729e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             class="lucide lucide-link">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <input id="address" type="text" class="grow" placeholder="address"/>
+                    </label>
+
+                    <label class="input input-bordered flex grow-0 w-32 items-center gap-2">
+                        <input id="port" type="number" class="grow" placeholder="port"/>
+                    </label>
+
+                    <label class="input input-bordered lg:grow-0 items-center lg:gap-2">
+                        <input id="fullService" type="text" class="grow" placeholder="fullService"/>
+                    </label>
+
+                    <button id="compile" class="m-2 btn btn-sm btn-square">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="#4729e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             class="lucide lucide-rotate-cw">
+                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                        </svg>
+                    </button>
+
+                    <!-- loading -->
+                    <div id="loading"
+                         class="fixed top-0 left-0 right-0 bottom-0 z-50 flex items-center justify-center bg-black opacity-20 hidden">
+                        <div class="loading-container">
+                            <span class="loading loading-spinner text-primary"></span>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="border border-dashed border-x-2 border-gray-300 m-5"></div>
+                <div class="collapse bg-base-200">
+                    <input type="checkbox" />
+                    <div class="collapse-title text-xl font-medium">
+                        proxy
+                    </div>
+                    <div class="collapse-content">
+                        <div class="flex flex-row items-center">
+                            <label class="input input-bordered flex items-center mr-2">
+                                <input id="p_address" type="text" class="grow" placeholder="proxy address"/>
+                            </label>
+
+                            <label class="input input-bordered flex items-center">
+                                <input id="p_port" type="number" class="grow" placeholder="proxy port"/>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-dashed border-x-2 border-gray-300 m-5"></div>
+
+                <label class="form-control w-full max-w-xs">
+                    <div class="label">
+                        <span class="label-text">method</span>
+                    </div>
+                    <select class="select select-bordered select-sm" id="methodSelect">
+                    </select>
+                </label>
+
+                <div class="overflow-x-auto h-52">
+                    <table class="table table-pin-cols">
+                        <!-- head -->
+                        <thead class="sticky top-0 z-25">
+                        <tr>
+                            <th></th>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="dataTable" class="-z-50">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="border border-dashed border-x-2 border-gray-300 m-2"></div>
+                <div class="flex justify-end">
+                    <button id="call" class="btn btn-success max-w-28 w-full inset-y-0">Commit</button>
+                </div>
+                <div>
+                    <div class="label">
+                        <span class="label-text">response</span>
+                    </div>
+                    <textarea id="result" class="textarea textarea-info w-full h-60" placeholder=""></textarea>
+                </div>
+            </div>
+        </div>
+        <!-- Sidebar -->
+        <div class="drawer-side">
+            <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
+            <ul class="menu p-4 w-80 min-h-full bg-base-200 flex flex-col items-start">
+                <h1 class="menu-title">interface management</h1>
+                <div class="flex flex-row items-center content-center">
+                    <label class="input input-bordered flex items-center gap-2 input-sm">
+                        <input type="text" class="grow" placeholder="Search"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                             class="w-4 h-4 opacity-70">
+                            <path fill-rule="evenodd"
+                                  d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </label>
+                    <button class="m-2 btn btn-sm btn-square">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="#4729e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             class="lucide lucide-list-plus">
+                            <path d="M11 12H3"/>
+                            <path d="M16 6H3"/>
+                            <path d="M16 18H3"/>
+                            <path d="M18 9v6"/>
+                            <path d="M21 12h-6"/>
+                        </svg>
+                    </button>
+                </div>
+                <li>
+                    <ul>
+                        <li><a>Item 1</a></li>
+                        <li><a>Item 2</a></li>
+                        <li><a>Item 3</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
+
+</body>
+</html>

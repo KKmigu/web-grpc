@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: web-grpc
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+  mvc:
+    static-path-pattern: /static/**
+  web:
+    resources:
+      static-locations: classpath:/static/
+server:
+  port: 29795
+grpc:
+  server:
+    port: 9090
