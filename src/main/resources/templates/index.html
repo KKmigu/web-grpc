@@ -37,7 +37,7 @@
             </div>
             <!-- Content -->
             <div class="m-8 flex flex-col">
-                <div class="flex flex-row items-center gap-2">
+                <div class="flex flex-row items-center gap-2 flex-wrap">
                     <label class="input input-bordered flex grow items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                              stroke="#4729e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -52,7 +52,7 @@
                         <input id="port" type="number" class="grow" placeholder="port"/>
                     </label>
 
-                    <label class="input input-bordered lg:grow-0 items-center lg:gap-2">
+                    <label class="input input-bordered flex grow-0 items-center gap-2">
                         <input id="fullService" type="text" class="grow" placeholder="fullService"/>
                     </label>
 
@@ -78,15 +78,63 @@
                 <div class="collapse bg-base-200">
                     <input type="checkbox" />
                     <div class="collapse-title text-xl font-medium">
-                        proxy
+                        config
                     </div>
                     <div class="collapse-content">
-                        <div class="flex flex-row items-center">
-                            <label class="input input-bordered flex items-center mr-2">
+                        <div class="flex flex-col">
+                            <div class="flex items-center flex-wrap flex-row">
+                                <label class="mr-2 font-medium text-gray-700">
+                                    transportType:
+                                </label>
+                                <div class="form-control">
+                                    <label class="label cursor-pointer">
+                                        <span class="label-text mr-1">PLAINTEXT</span>
+                                        <input type="radio" name="transportType" value="PLAINTEXT" class="radio checked:bg-red-500" checked />
+                                    </label>
+                                </div>
+                                <div class="form-control">
+                                    <label class="label cursor-pointer">
+                                        <span class="label-text  mr-1">SSL/TLS</span>
+                                        <input type="radio" name="transportType" value="TLS" class="radio checked:bg-blue-500" />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="flex mb-2 hidden" id="fileInputBox">
+                                <label class="form-control w-full max-w-xs">
+                                    <div class="label">
+                                        <span class="label-text">trust cert collection file</span>
+                                    </div>
+                                    <input type="file" id="trustCertCollectionFile" class="file-input file-input-bordered file-input-xs w-full max-w-xs" />
+                                </label>
+
+                                <label class="form-control w-full max-w-xs">
+                                    <div class="label">
+                                        <span class="label-text">client cert chain file</span>
+                                    </div>
+                                    <input type="file" id="clientCertChainFile" class="file-input file-input-bordered file-input-xs w-full max-w-xs" />
+                                </label>
+
+                                <label class="form-control w-full max-w-xs">
+                                    <div class="label">
+                                        <span class="label-text">client private key file</span>
+                                    </div>
+                                    <input type="file" id="clientPrivateKeyFile" class="file-input file-input-bordered file-input-xs w-full max-w-xs" />
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <div class="flex flex-row items-center flex-wrap mr-2 ">
+                            <label class="mr-2 font-medium text-gray-700">
+                                proxy:
+                            </label>
+
+                            <label class="input input-sm input-bordered flex items-center mr-2">
                                 <input id="p_address" type="text" class="grow" placeholder="proxy address"/>
                             </label>
 
-                            <label class="input input-bordered flex items-center">
+                            <label class="input input-sm input-bordered flex items-center">
                                 <input id="p_port" type="number" class="grow" placeholder="proxy port"/>
                             </label>
                         </div>
@@ -133,7 +181,7 @@
         <div class="drawer-side">
             <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
             <ul class="menu p-4 w-80 min-h-full bg-base-200 flex flex-col items-start">
-                <h1 class="menu-title">interface management</h1>
+                <h1 class="menu-title">rpc interface management</h1>
                 <div class="flex flex-row items-center content-center">
                     <label class="input input-bordered flex items-center gap-2 input-sm">
                         <input type="text" class="grow" placeholder="Search"/>

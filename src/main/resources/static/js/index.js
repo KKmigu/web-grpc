@@ -8,7 +8,6 @@ const GRPC_CALL_URL = BASE_URL + 'api/grpc/call'
 
 const descriptorData = []
 const toastComponent = new ToastComponent()
-let currentDescriptorValue = null
 
 const queryDescriptorBtnContainer = document.getElementById('compile')
 const addressInputContainer = document.getElementById('address')
@@ -25,27 +24,52 @@ const loadingContainer = document.getElementById('loading')
 const commitBtnContainer = document.getElementById('call')
 const resultContainer = document.getElementById('result');
 
-queryDescriptorBtnContainer.onclick = function () {
-    let address = addressInputContainer.value
-    let port = protInputContainer.value
-    let fullService = fullServiceInputContainer.value
+const fileInputBoxContainer = document.getElementById('fileInputBox');
+const transportTypeRadioContainers = document.getElementsByName('transportType')
 
-    if (address === '' || port === '' || fullService === '') {
+const reqInstance = {
+    address: null,
+    port: null,
+    fullService: null,
+    method: null,
+    message: null,
+    fieldList: null,
+    transportType: 'PLAINTEXT',
+    proxyReq: {
+        address: null,
+        port: null
+    }
+}
+
+queryDescriptorBtnContainer.onclick = function () {
+    if (reqInstance.address === '' || reqInstance.port === '' || reqInstance.fullService === '') {
         toastComponent.createToast('warning', 'Please fill in all fields.')
         return
     }
     resultContainer.innerHTML = ''
     dataTableContainer.innerHTML = ''
     methodSelectContainer.innerHTML = ''
-    queryDescriptor(address, port, fullService, proxyAddressInputContainer.value,proxyPortInputContainer.value)
+    queryDescriptor()
 }
 
+addressInputContainer.addEventListener('change', function (event) {
+    reqInstance.address = event.target.value
+})
+protInputContainer.addEventListener('change', function (event) {
+    reqInstance.port = event.target.value
+})
+fullServiceInputContainer.addEventListener('change', function (event) {
+    reqInstance.fullService = event.target.value
+})
+proxyAddressInputContainer.addEventListener('change', function (event) {
+    reqInstance.proxyReq.address = event.target.value
+})
+proxyPortInputContainer.addEventListener('change', function (event) {
+    reqInstance.proxyReq.port = event.target.value
+})
 
 commitBtnContainer.onclick = function () {
-    grpcCall(addressInputContainer.value, protInputContainer.value,
-        fullServiceInputContainer.value, methodSelectContainer.value,
-        currentDescriptorValue.message, currentDescriptorValue.fieldList,
-        proxyAddressInputContainer.value, proxyPortInputContainer.value)
+    grpcCall()
 }
 
 function onDataInput(item, parentItem) {
@@ -147,15 +171,28 @@ methodSelectContainer.addEventListener('change', function (event) {
     event.stopPropagation()
     dataTableContainer.innerHTML = ''
     const value = this.value
-    currentDescriptorValue = descriptorData.find(e => e.method === value)
-    const fieldList = currentDescriptorValue?.fieldList
-    if (fieldList == null) {
+    reqInstance.method = value
+    const descriptorData_v = descriptorData.find(e => e.method === value);
+    reqInstance.message = descriptorData_v.message
+    reqInstance.fieldList = descriptorData_v.fieldList
+    if (reqInstance.fieldList == null) {
         return
     }
-    fieldList.forEach((item, index) => {
+    reqInstance.fieldList.forEach((item, index) => {
         dataTableContainer.appendChild(processTableDom(index, item))
     })
 })
+
+transportTypeRadioContainers.forEach(radio => {
+    radio.addEventListener('change', function() {
+        reqInstance.transportType = this.value
+        if (this.value === 'PLAINTEXT') {
+            fileInputBoxContainer.classList.add('hidden');
+        } else {
+            fileInputBoxContainer.classList.remove('hidden');
+        }
+    });
+});
 
 /**
  * Get information about the method and its field descriptions
@@ -166,23 +203,17 @@ methodSelectContainer.addEventListener('change', function (event) {
  * @param proxyPort
  */
 
-function queryDescriptor(address, port, fullService, proxyAddress, proxyPort) {
+function queryDescriptor() {
     loadingContainer.classList.remove('hidden')
+    reqInstance.method = null
+    reqInstance.message = null
+    reqInstance.fieldList = null
     fetch(QUERY_DESCRIPTOR_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            address: address,
-            port: port,
-            fullService: fullService,
-            transportType: 'PLAINTEXT',
-            proxyReq: {
-                address: proxyAddress,
-                port: proxyPort
-            }
-        })
+        body: JSON.stringify(reqInstance)
     }).then(async response => {
         if (response.ok) {
             return response.json();
@@ -200,26 +231,14 @@ function queryDescriptor(address, port, fullService, proxyAddress, proxyPort) {
     })
 }
 
-function grpcCall(address, port, fullService, method, message, fieldList, proxyAddress, proxyPort) {
+function grpcCall() {
     loadingContainer.classList.remove('hidden')
     fetch(GRPC_CALL_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            address: address,
-            port: port,
-            fullService: fullService,
-            method: method,
-            message: message,
-            fieldList: fieldList,
-            transportType: 'PLAINTEXT',
-            proxyReq: {
-                address: proxyAddress,
-                port: proxyPort
-            }
-        })
+        body: JSON.stringify(reqInstance)
     }).then(async response => {
         const body = response.text();
         if (response.ok) {
