@@ -218,7 +218,6 @@ function queryDescriptor() {
         if (response.ok) {
             return response.json();
         } else {
-            // 处理错误响应，例如4xx或5xx状态码
             throw new Error(await response.text());
         }
     }).then(data => {
@@ -244,7 +243,6 @@ function grpcCall() {
         if (response.ok) {
             return body;
         } else {
-            // 处理错误响应，例如4xx或5xx状态码
             throw new Error(await body);
         }
     }).then(data => {
