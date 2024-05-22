@@ -32,8 +32,4 @@ public class GrpcReq implements Serializable {
     private TransportType transportType;
 
     private ProxyReq proxyReq;
-
-    private MultipartFile trustCertCollectionFile;
-    private MultipartFile clientCertChainFile;
-    private MultipartFile clientPrivateKeyFile;
 }

@@ -58,7 +58,7 @@ public class DynamicGrpcClient {
      * @param grpcReq
      * @return
      */
-    public DeferredResult<ResponseEntity<Object>> reflectGrpcCall(GrpcReq grpcReq) {
+    public DeferredResult<ResponseEntity<Object>> reflectGrpcCall(GrpcReq grpcReq,MultipartFile trustCertCollectionFile,MultipartFile clientCertChainFile,MultipartFile clientPrivateKeyFile) {
         if (grpcReq.getMessage() == null) {
             grpcReq.setMessage("Empty");
         }
@@ -73,7 +73,7 @@ public class DynamicGrpcClient {
             CountDownLatch latch = new CountDownLatch(1);
 
             // create a channel to the grpc server
-            channel = processManagedChannel(grpcReq).build();
+            channel = processManagedChannel(grpcReq,trustCertCollectionFile,clientCertChainFile,clientPrivateKeyFile).build();
             ServerReflectionGrpc.ServerReflectionStub reflectionStub = ServerReflectionGrpc.newStub(channel);
             // create a StreamObserver to receive the server's response
             StreamObserver<ServerReflectionResponse> responseObserver = new StreamObserver<>() {
@@ -102,15 +102,15 @@ public class DynamicGrpcClient {
                         String result = new String(TextFormat.unescapeBytes(resultMessage.toString()).toByteArray());
                         reflectGrpcCallResponse.setResult(ResponseEntity.ok(result));
                     } catch (RuntimeException | Descriptors.DescriptorValidationException | IOException e) {
-                        log.error("grpc call error: {}", e.getMessage());
-                        reflectGrpcCallResponse.setErrorResult(e);
+                        log.error("grpc call error: {}", e.getMessage() + "->" + e.getCause().getMessage());
+                        reflectGrpcCallResponse.setErrorResult(e + "->" + e.getCause().getMessage());
                     }
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
-                    reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(throwable.getMessage()));
-                    log.error("grpc call error: {}", throwable.getMessage());
+                    reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(throwable.getMessage() + "->" + throwable.getCause().getMessage()));
+                    log.error("grpc call error: {}", throwable.getMessage() + "->" + throwable.getCause().getMessage());
                     latch.countDown();
                 }
 
@@ -127,8 +127,8 @@ public class DynamicGrpcClient {
                 Thread.currentThread().interrupt();
             }
         } catch (Exception exception) {
-            log.error("grpc call error: {}", exception.getMessage());
-            reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(exception.getMessage()));
+            log.error("grpc call error: {}", exception.getMessage() + "->" + exception.getCause().getMessage());
+            reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(exception.getMessage() + "->" + exception.getCause().getMessage()));
         } finally {
             if (channel != null) channel.shutdownNow();
         }
@@ -141,7 +141,7 @@ public class DynamicGrpcClient {
      * @param grpcReq
      * @return
      */
-    public DeferredResult<ResponseEntity<List<DescriptorRes>>> queryDescriptor(GrpcReq grpcReq) {
+    public DeferredResult<ResponseEntity<List<DescriptorRes>>> queryDescriptor(GrpcReq grpcReq, MultipartFile trustCertCollectionFile,MultipartFile clientCertChainFile,MultipartFile clientPrivateKeyFile) {
         final DeferredResult<ResponseEntity<List<DescriptorRes>>> reflectGrpcCallResponse = new DeferredResult<>();
         ManagedChannel channel = null;
         try {
@@ -149,7 +149,7 @@ public class DynamicGrpcClient {
             CountDownLatch latch = new CountDownLatch(1);
 
             // create a channel to the grpc server
-            channel = processManagedChannel(grpcReq).build();
+            channel = processManagedChannel(grpcReq,trustCertCollectionFile,clientCertChainFile,clientPrivateKeyFile).build();
             ServerReflectionGrpc.ServerReflectionStub reflectionStub = ServerReflectionGrpc.newStub(channel);
             // create a StreamObserver to receive the server's response
             StreamObserver<ServerReflectionResponse> responseObserver = new StreamObserver<>() {
@@ -179,8 +179,8 @@ public class DynamicGrpcClient {
 
                 @Override
                 public void onError(Throwable throwable) {
-                    reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(throwable.getMessage()));
-                    log.error("grpc call error: {}", throwable.getMessage());
+                    reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(throwable.getMessage() + "->" + throwable.getCause().getMessage()));
+                    log.error("grpc call error: {}", throwable.getMessage() + "->" + throwable.getCause().getMessage());
                     latch.countDown();
                 }
 
@@ -197,8 +197,8 @@ public class DynamicGrpcClient {
                 Thread.currentThread().interrupt();
             }
         } catch (Exception exception) {
-            log.error("grpc call error: {}", exception.getMessage());
-            reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(exception.getMessage()));
+            log.error("grpc call error: {}", exception.getMessage() + "->" + exception.getCause().getMessage());
+            reflectGrpcCallResponse.setErrorResult(ResponseEntity.status(HttpStatusCode.valueOf(HttpServletResponse.SC_BAD_REQUEST)).body(exception.getMessage() + "->" + exception.getCause().getMessage()));
         } finally {
             if (channel != null) channel.shutdownNow();
         }
@@ -224,14 +224,14 @@ public class DynamicGrpcClient {
      * Construct a gRPC ManagedChannelBuilder object with the given parameters to create a connection to the gRPC server.
      * As needed, it can be configured to use either plaintext or encrypted communication, as well as to connect through a proxy server.
      */
-    private static ManagedChannelBuilder<?> processManagedChannel(GrpcReq grpcReq) throws Exception {
+    private static ManagedChannelBuilder<?> processManagedChannel(GrpcReq grpcReq,MultipartFile trustCertCollectionFile,MultipartFile clientCertChainFile,MultipartFile clientPrivateKeyFile) throws Exception {
         ManagedChannelBuilder<?> managedChannelBuilder = ManagedChannelBuilder.forAddress(grpcReq.getAddress(), grpcReq.getPort());
         switch (grpcReq.getTransportType()) {
             case PLAINTEXT:
                 managedChannelBuilder = managedChannelBuilder.usePlaintext();
                 break;
             case TLS:
-                SslContext sslContext = buildSslContext(grpcReq.getTrustCertCollectionFile(), grpcReq.getClientCertChainFile(), grpcReq.getClientPrivateKeyFile());
+                SslContext sslContext = buildSslContext(trustCertCollectionFile, clientCertChainFile, clientPrivateKeyFile);
                 managedChannelBuilder = NettyChannelBuilder.forAddress(grpcReq.getAddress(), grpcReq.getPort())
                         .negotiationType(NegotiationType.TLS)
                         .sslContext(sslContext);
