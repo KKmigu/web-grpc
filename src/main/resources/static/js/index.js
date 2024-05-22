@@ -26,7 +26,11 @@ const resultContainer = document.getElementById('result');
 
 const fileInputBoxContainer = document.getElementById('fileInputBox');
 const transportTypeRadioContainers = document.getElementsByName('transportType')
+const trustCertCollectionFileContainer = document.getElementById('trustCertCollectionFile')
+const clientCertChainFileContainer = document.getElementById('clientCertChainFile')
+const clientPrivateKeyFileContainer = document.getElementById('clientPrivateKeyFile')
 
+const formData = new FormData();
 const reqInstance = {
     address: null,
     port: null,
@@ -38,7 +42,10 @@ const reqInstance = {
     proxyReq: {
         address: null,
         port: null
-    }
+    },
+    trustCertCollectionFile: null,
+    clientCertChainFile: null,
+    clientPrivateKeyFile: null,
 }
 
 queryDescriptorBtnContainer.onclick = function () {
@@ -66,6 +73,15 @@ proxyAddressInputContainer.addEventListener('change', function (event) {
 })
 proxyPortInputContainer.addEventListener('change', function (event) {
     reqInstance.proxyReq.port = event.target.value
+})
+trustCertCollectionFileContainer.addEventListener('change', function (event) {
+    formData.set('trustCertCollectionFile',event.target.files[0])
+})
+clientCertChainFileContainer.addEventListener('change', function (event) {
+    formData.set('clientCertChainFile',event.target.files[0])
+})
+clientPrivateKeyFileContainer.addEventListener('change', function (event) {
+    formData.set('clientPrivateKeyFile',event.target.files[0])
 })
 
 commitBtnContainer.onclick = function () {
@@ -184,7 +200,7 @@ methodSelectContainer.addEventListener('change', function (event) {
 })
 
 transportTypeRadioContainers.forEach(radio => {
-    radio.addEventListener('change', function() {
+    radio.addEventListener('change', function () {
         reqInstance.transportType = this.value
         if (this.value === 'PLAINTEXT') {
             fileInputBoxContainer.classList.add('hidden');
@@ -205,15 +221,22 @@ transportTypeRadioContainers.forEach(radio => {
 
 function queryDescriptor() {
     loadingContainer.classList.remove('hidden')
+    if (reqInstance.transportType === 'PLAINTEXT') {
+        trustCertCollectionFileContainer.value = null
+        clientCertChainFileContainer.value = null
+        clientPrivateKeyFileContainer.value = null
+        formData.delete('trustCertCollectionFile')
+        formData.delete('clientCertChainFile')
+        formData.delete('clientPrivateKeyFile')
+    }
     reqInstance.method = null
     reqInstance.message = null
     reqInstance.fieldList = null
+    formData.set('grpcReq', new Blob([JSON.stringify(reqInstance)],{type: "application/json"}));
+
     fetch(QUERY_DESCRIPTOR_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(reqInstance)
+        body: formData
     }).then(async response => {
         if (response.ok) {
             return response.json();
@@ -232,12 +255,18 @@ function queryDescriptor() {
 
 function grpcCall() {
     loadingContainer.classList.remove('hidden')
+    if (reqInstance.transportType === 'PLAINTEXT') {
+        trustCertCollectionFileContainer.value = null
+        clientCertChainFileContainer.value = null
+        clientPrivateKeyFileContainer.value = null
+        formData.delete('trustCertCollectionFile')
+        formData.delete('clientCertChainFile')
+        formData.delete('clientPrivateKeyFile')
+    }
+    formData.set('grpcReq', new Blob([JSON.stringify(reqInstance)],{type: "application/json"}));
     fetch(GRPC_CALL_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(reqInstance)
+        body: formData
     }).then(async response => {
         const body = response.text();
         if (response.ok) {
